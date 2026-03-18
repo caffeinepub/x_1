@@ -86,6 +86,7 @@ export function useAddTransaction() {
       note: string;
       category: string;
       date: string;
+      debtPerson: string;
     }) =>
       actor!.addTransaction(
         vars.type,
@@ -93,6 +94,7 @@ export function useAddTransaction() {
         vars.note,
         vars.category,
         vars.date,
+        vars.debtPerson,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
   });
@@ -109,6 +111,7 @@ export function useEditTransaction() {
       note: string;
       category: string;
       date: string;
+      debtPerson: string;
     }) =>
       actor!.editTransaction(
         vars.id,
@@ -117,6 +120,7 @@ export function useEditTransaction() {
         vars.note,
         vars.category,
         vars.date,
+        vars.debtPerson,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
   });

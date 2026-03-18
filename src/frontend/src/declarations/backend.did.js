@@ -25,6 +25,7 @@ export const Transaction = IDL.Record({
   'note' : IDL.Text,
   'createdAt' : IDL.Int,
   'type' : IDL.Text,
+  'debtPerson' : IDL.Text,
   'category' : IDL.Text,
   'amount' : IDL.Float64,
 });
@@ -34,7 +35,7 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addPerson' : IDL.Func([IDL.Text, IDL.Float64, IDL.Text], [IDL.Nat], []),
   'addTransaction' : IDL.Func(
-      [IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [IDL.Nat],
       [],
     ),
@@ -43,7 +44,7 @@ export const idlService = IDL.Service({
   'deleteTransaction' : IDL.Func([IDL.Nat], [], []),
   'editPerson' : IDL.Func([IDL.Nat, IDL.Text, IDL.Float64, IDL.Text], [], []),
   'editTransaction' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Nat, IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [],
       [],
     ),
@@ -90,6 +91,7 @@ export const idlFactory = ({ IDL }) => {
     'note' : IDL.Text,
     'createdAt' : IDL.Int,
     'type' : IDL.Text,
+    'debtPerson' : IDL.Text,
     'category' : IDL.Text,
     'amount' : IDL.Float64,
   });
@@ -99,7 +101,7 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addPerson' : IDL.Func([IDL.Text, IDL.Float64, IDL.Text], [IDL.Nat], []),
     'addTransaction' : IDL.Func(
-        [IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [IDL.Nat],
         [],
       ),
@@ -108,7 +110,15 @@ export const idlFactory = ({ IDL }) => {
     'deleteTransaction' : IDL.Func([IDL.Nat], [], []),
     'editPerson' : IDL.Func([IDL.Nat, IDL.Text, IDL.Float64, IDL.Text], [], []),
     'editTransaction' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Float64, IDL.Text, IDL.Text, IDL.Text],
+        [
+          IDL.Nat,
+          IDL.Text,
+          IDL.Float64,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+        ],
         [],
         [],
       ),

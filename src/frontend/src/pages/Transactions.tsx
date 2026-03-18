@@ -1,14 +1,3 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,14 +18,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   CreditCard,
+  Download,
   Loader2,
   Pencil,
   PiggyBank,
   Plus,
   Search,
-  Trash2,
   TrendingDown,
   TrendingUp,
+  User,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
@@ -45,7 +35,6 @@ import type { Transaction } from "../backend.d";
 import {
   useAddTransaction,
   useAllTransactions,
-  useDeleteTransaction,
   useEditTransaction,
 } from "../hooks/useQueries";
 
@@ -115,6 +104,45 @@ function fmtDate(d: string) {
   }
 }
 
+function downloadExcel(txns: Transaction[]) {
+  const headers = [
+    "Date",
+    "Type",
+    "Category",
+    "Note",
+    "Amount (INR)",
+    "Kiska H (Debt Person)",
+  ];
+  const rows = [...txns]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map((t) => [
+      t.date,
+      t.type,
+      t.category,
+      t.note,
+      Math.abs(Number(t.amount)),
+      t.debtPerson ?? "",
+    ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) =>
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+    )
+    .join("\n");
+
+  const BOM = "\uFEFF";
+  const blob = new Blob([BOM + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `X-Finance-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("Excel file download ho raha hai!");
+}
+
 interface TxnFormProps {
   initial?: Transaction;
   onClose: () => void;
@@ -130,6 +158,7 @@ function TxnForm({ initial, onClose }: TxnFormProps) {
   const [date, setDate] = useState(
     initial?.date ?? new Date().toISOString().slice(0, 10),
   );
+  const [debtPerson, setDebtPerson] = useState(initial?.debtPerson ?? "");
   const addTxn = useAddTransaction();
   const editTxn = useEditTransaction();
 
@@ -140,6 +169,7 @@ function TxnForm({ initial, onClose }: TxnFormProps) {
       toast.error("Enter a valid amount");
       return;
     }
+    const dp = type === "debt" ? debtPerson : "";
     if (isEdit) {
       await editTxn.mutateAsync({
         id: initial!.id,
@@ -148,6 +178,7 @@ function TxnForm({ initial, onClose }: TxnFormProps) {
         note,
         category,
         date,
+        debtPerson: dp,
       });
       toast.success("Transaction updated!");
     } else {
@@ -157,6 +188,7 @@ function TxnForm({ initial, onClose }: TxnFormProps) {
         note,
         category,
         date,
+        debtPerson: dp,
       });
       toast.success("Transaction added!");
     }
@@ -200,6 +232,27 @@ function TxnForm({ initial, onClose }: TxnFormProps) {
           className="mt-1 bg-input border-border"
         />
       </div>
+      {type === "debt" && (
+        <div>
+          <Label
+            htmlFor="txn-debt-person"
+            className="text-sm text-muted-foreground"
+          >
+            Kiska h? (Person Name)
+          </Label>
+          <div className="relative mt-1">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="txn-debt-person"
+              data-ocid="txn_form.debt_person.input"
+              placeholder="e.g., Rahul, Priya..."
+              value={debtPerson}
+              onChange={(e) => setDebtPerson(e.target.value)}
+              className="pl-9 bg-input border-border"
+            />
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="text-sm text-muted-foreground">Category</Label>
@@ -274,7 +327,6 @@ function TxnForm({ initial, onClose }: TxnFormProps) {
 
 export default function Transactions() {
   const { data: txns = [], isLoading } = useAllTransactions();
-  const deleteTxn = useDeleteTransaction();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
@@ -288,7 +340,8 @@ export default function Transactions() {
       list = list.filter(
         (t) =>
           t.note.toLowerCase().includes(q) ||
-          t.category.toLowerCase().includes(q),
+          t.category.toLowerCase().includes(q) ||
+          t.debtPerson?.toLowerCase().includes(q),
       );
     }
     return list;
@@ -296,11 +349,6 @@ export default function Transactions() {
 
   const getTxnInfo = (type: string) =>
     TRANSACTION_TYPES.find((t) => t.value === type) ?? TRANSACTION_TYPES[0];
-
-  const handleDelete = async (id: bigint) => {
-    await deleteTxn.mutateAsync(id);
-    toast.success("Transaction deleted");
-  };
 
   return (
     <div className="space-y-6 max-w-screen-lg mx-auto">
@@ -311,27 +359,37 @@ export default function Transactions() {
             {txns.length} total records
           </p>
         </div>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button
-              data-ocid="transactions.add.open_modal_button"
-              className="bg-primary text-primary-foreground gap-2"
-            >
-              <Plus className="w-4 h-4" /> Add Transaction
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            className="bg-popover border-border sm:max-w-md"
-            data-ocid="add_transaction.dialog"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="border-border gap-2"
+            onClick={() => downloadExcel(txns)}
+            data-ocid="transactions.download_excel_button"
           >
-            <DialogHeader>
-              <DialogTitle className="text-foreground">
-                Add Transaction
-              </DialogTitle>
-            </DialogHeader>
-            <TxnForm onClose={() => setAddOpen(false)} />
-          </DialogContent>
-        </Dialog>
+            <Download className="w-4 h-4" /> Download Excel
+          </Button>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button
+                data-ocid="transactions.add.open_modal_button"
+                className="bg-primary text-primary-foreground gap-2"
+              >
+                <Plus className="w-4 h-4" /> Add Transaction
+              </Button>
+            </DialogTrigger>
+            <DialogContent
+              className="bg-popover border-border sm:max-w-md"
+              data-ocid="add_transaction.dialog"
+            >
+              <DialogHeader>
+                <DialogTitle className="text-foreground">
+                  Add Transaction
+                </DialogTitle>
+              </DialogHeader>
+              <TxnForm onClose={() => setAddOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -427,6 +485,12 @@ export default function Transactions() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {info.label} · {txn.category} · {fmtDate(txn.date)}
+                        {txn.type === "debt" && txn.debtPerson && (
+                          <span className="ml-1.5 inline-flex items-center gap-0.5 bg-warning/15 text-warning px-1.5 py-0.5 rounded-md font-medium">
+                            <User className="w-2.5 h-2.5" />
+                            {txn.debtPerson}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <span
@@ -446,47 +510,6 @@ export default function Transactions() {
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 text-muted-foreground hover:text-destructive"
-                            data-ocid={`transactions.delete_button.${i + 1}`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent
-                          className="bg-popover border-border"
-                          data-ocid="delete_transaction.dialog"
-                        >
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-foreground">
-                              Delete Transaction?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="text-muted-foreground">
-                              This will permanently remove this transaction.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel
-                              data-ocid="delete_transaction.cancel_button"
-                              className="border-border"
-                            >
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              data-ocid="delete_transaction.confirm_button"
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleDelete(txn.id)}
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     </div>
                   </motion.div>
                 );

@@ -22,6 +22,7 @@ export interface Transaction {
     note: string;
     createdAt: bigint;
     type: string;
+    debtPerson: string;
     category: string;
     amount: number;
 }
@@ -32,12 +33,12 @@ export enum UserRole {
 }
 export interface backendInterface {
     addPerson(name: string, amount: number, note: string): Promise<bigint>;
-    addTransaction(type: string, amount: number, note: string, category: string, date: string): Promise<bigint>;
+    addTransaction(type: string, amount: number, note: string, category: string, date: string, debtPerson: string): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deletePerson(id: bigint): Promise<void>;
     deleteTransaction(id: bigint): Promise<void>;
     editPerson(id: bigint, name: string, amount: number, note: string): Promise<void>;
-    editTransaction(id: bigint, type: string, amount: number, note: string, category: string, date: string): Promise<void>;
+    editTransaction(id: bigint, type: string, amount: number, note: string, category: string, date: string, debtPerson: string): Promise<void>;
     getAllPeople(): Promise<Array<Person>>;
     getAllTransactions(): Promise<Array<Transaction>>;
     getCallerUserProfile(): Promise<UserProfile | null>;

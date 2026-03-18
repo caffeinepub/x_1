@@ -22,6 +22,7 @@ export interface Transaction {
   'note' : string,
   'createdAt' : bigint,
   'type' : string,
+  'debtPerson' : string,
   'category' : string,
   'amount' : number,
 }
@@ -33,7 +34,7 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addPerson' : ActorMethod<[string, number, string], bigint>,
   'addTransaction' : ActorMethod<
-    [string, number, string, string, string],
+    [string, number, string, string, string, string],
     bigint
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
@@ -41,7 +42,7 @@ export interface _SERVICE {
   'deleteTransaction' : ActorMethod<[bigint], undefined>,
   'editPerson' : ActorMethod<[bigint, string, number, string], undefined>,
   'editTransaction' : ActorMethod<
-    [bigint, string, number, string, string, string],
+    [bigint, string, number, string, string, string, string],
     undefined
   >,
   'getAllPeople' : ActorMethod<[], Array<Person>>,

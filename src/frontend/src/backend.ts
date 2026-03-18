@@ -104,6 +104,7 @@ export interface Transaction {
     note: string;
     createdAt: bigint;
     type: string;
+    debtPerson: string;
     category: string;
     amount: number;
 }
@@ -115,12 +116,12 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addPerson(name: string, amount: number, note: string): Promise<bigint>;
-    addTransaction(type: string, amount: number, note: string, category: string, date: string): Promise<bigint>;
+    addTransaction(type: string, amount: number, note: string, category: string, date: string, debtPerson: string): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deletePerson(id: bigint): Promise<void>;
     deleteTransaction(id: bigint): Promise<void>;
     editPerson(id: bigint, name: string, amount: number, note: string): Promise<void>;
-    editTransaction(id: bigint, type: string, amount: number, note: string, category: string, date: string): Promise<void>;
+    editTransaction(id: bigint, type: string, amount: number, note: string, category: string, date: string, debtPerson: string): Promise<void>;
     getAllPeople(): Promise<Array<Person>>;
     getAllTransactions(): Promise<Array<Transaction>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
@@ -162,17 +163,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async addTransaction(arg0: string, arg1: number, arg2: string, arg3: string, arg4: string): Promise<bigint> {
+    async addTransaction(arg0: string, arg1: number, arg2: string, arg3: string, arg4: string, arg5: string): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.addTransaction(arg0, arg1, arg2, arg3, arg4);
+                const result = await this.actor.addTransaction(arg0, arg1, arg2, arg3, arg4, arg5);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.addTransaction(arg0, arg1, arg2, arg3, arg4);
+            const result = await this.actor.addTransaction(arg0, arg1, arg2, arg3, arg4, arg5);
             return result;
         }
     }
@@ -232,17 +233,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async editTransaction(arg0: bigint, arg1: string, arg2: number, arg3: string, arg4: string, arg5: string): Promise<void> {
+    async editTransaction(arg0: bigint, arg1: string, arg2: number, arg3: string, arg4: string, arg5: string, arg6: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.editTransaction(arg0, arg1, arg2, arg3, arg4, arg5);
+                const result = await this.actor.editTransaction(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.editTransaction(arg0, arg1, arg2, arg3, arg4, arg5);
+            const result = await this.actor.editTransaction(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
             return result;
         }
     }

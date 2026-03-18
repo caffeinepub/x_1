@@ -158,6 +158,7 @@ function AddTransactionForm({ onClose }: AddTransactionFormProps) {
       note,
       category,
       date,
+      debtPerson: "",
     });
     toast.success("Transaction added!");
     onClose();

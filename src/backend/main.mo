@@ -9,6 +9,8 @@ import Time "mo:core/Time";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
+
+
 actor {
   // TYPES
   type Transaction = {
@@ -18,13 +20,14 @@ actor {
     note : Text;
     category : Text;
     date : Text; // YYYY-MM-DD
+    debtPerson : Text;
     createdAt : Int;
   };
 
   type Person = {
     id : Nat;
     name : Text;
-    amount : Float; // Positive: they owe me, Negative: I owe them
+    amount : Float;
     note : Text;
   };
 
@@ -101,7 +104,7 @@ actor {
   };
 
   // TRANSACTIONS
-  public shared ({ caller }) func addTransaction(type_ : Text, amount : Float, note : Text, category : Text, date : Text) : async Nat {
+  public shared ({ caller }) func addTransaction(type_ : Text, amount : Float, note : Text, category : Text, date : Text, debtPerson : Text) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can add transactions");
     };
@@ -115,6 +118,7 @@ actor {
       note;
       category;
       date;
+      debtPerson;
       createdAt = Time.now();
     };
 
@@ -130,7 +134,7 @@ actor {
     newId;
   };
 
-  public shared ({ caller }) func editTransaction(id : Nat, type_ : Text, amount : Float, note : Text, category : Text, date : Text) : async () {
+  public shared ({ caller }) func editTransaction(id : Nat, type_ : Text, amount : Float, note : Text, category : Text, date : Text, debtPerson : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can edit transactions");
     };
@@ -149,6 +153,7 @@ actor {
           note;
           category;
           date;
+          debtPerson;
           createdAt = oldTransaction.createdAt;
         };
 
